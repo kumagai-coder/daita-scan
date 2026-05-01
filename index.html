@@ -170,7 +170,13 @@ function updateTotal(){
 }
 async function startCamera(){
   try{
-    videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    videoStream=await navigator.mediaDevices.getUserMedia({
+      video:{
+        facingMode:'environment',
+        width:{ideal:1280},
+        height:{ideal:1280}
+      }
+    });
     const video=document.getElementById('video');
     video.srcObject=videoStream;await video.play();
     document.getElementById('scan-status').textContent='QRコードにカメラを向けてください';
@@ -188,11 +194,24 @@ function scanFrame(){
   const video=document.getElementById('video');
   const canvas=document.getElementById('canvas');
   if(video.readyState===video.HAVE_ENOUGH_DATA){
-    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-    const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0);
+    // 解像度を上げる
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
     const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
-    const code=jsQR(imageData.data,imageData.width,imageData.height);
-    if(code){stopCamera();fetchRecord(code.data);return;}
+    const code=jsQR(imageData.data,imageData.width,imageData.height,{
+      inversionAttempts:'dontInvert'
+    });
+    if(code){
+      // スキャン成功をユーザーに見せる
+      document.getElementById('scan-status').textContent='✅ 読み取り成功: '+code.data;
+      setTimeout(()=>{
+        stopCamera();
+        fetchRecord(code.data);
+      },500);
+      return;
+    }
   }
   requestAnimationFrame(scanFrame);
 }
