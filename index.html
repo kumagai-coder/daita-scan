@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>代田ファクトリー 作業記録</title>
+<style>
+:root{--black:#0a0a0a;--white:#f5f5f0;--accent:#e8441a;--gray:#888;--card:#1a1a1a}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--black);color:var(--white);font-family:'Helvetica Neue','Hiragino Kaku Gothic ProN',sans-serif;min-height:100vh;max-width:480px;margin:0 auto}
+.header{padding:20px 20px 12px;border-bottom:1px solid #222}
+.header-logo{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.header-title{font-size:14px;font-weight:500;color:var(--white)}
+.screen{display:none;padding:24px 20px}.screen.active{display:block}
+.scan-label{font-size:11px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;font-weight:700}
+#video-container{position:relative;width:100%;aspect-ratio:1;background:#111;border-radius:12px;overflow:hidden;border:1px solid #333}
+#video{width:100%;height:100%;object-fit:cover}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:60%;aspect-ratio:1;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.4);position:relative}
+.scan-line{position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanLine 2s ease-in-out infinite;top:50%}
+@keyframes scanLine{0%,100%{top:15%;opacity:0}10%{opacity:1}90%{opacity:1}50%{top:85%}}
+.scan-status{text-align:center;margin-top:12px;font-size:13px;color:var(--gray);line-height:1.6}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#333}
+.divider span{font-size:11px;color:var(--gray);letter-spacing:.1em}
+.manual-row{display:flex;gap:10px}
+.manual-input{flex:1;background:#1a1a1a;border:1px solid #333;color:var(--white);padding:14px 16px;border-radius:10px;font-size:16px;outline:none;font-family:inherit}
+.manual-input:focus{border-color:var(--accent)}
+.manual-input::placeholder{color:#555}
+.btn{width:100%;padding:16px;border-radius:12px;border:none;font-size:15px;font-weight:700;letter-spacing:.08em;cursor:pointer;font-family:inherit;transition:all .15s;-webkit-appearance:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:var(--white)}
+.btn-secondary{background:#222;color:var(--white);border:1px solid #333}
+.btn-sm{width:auto;padding:14px 20px;font-size:14px}
+.anken-card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:24px;border:1px solid #2a2a2a}
+.anken-no{font-size:11px;color:var(--accent);letter-spacing:.15em;font-weight:700;margin-bottom:6px}
+.anken-name{font-size:15px;font-weight:600;color:var(--white);line-height:1.4}
+.anken-client{font-size:12px;color:var(--gray);margin-top:4px}
+.field-label{font-size:11px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:10px;font-weight:700}
+.field-group{margin-bottom:22px}
+.staff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.staff-btn{padding:12px 8px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--white);font-size:14px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;-webkit-appearance:none;transition:all .15s}
+.staff-btn.selected{background:var(--accent);border-color:var(--accent)}
+.work-items{display:flex;flex-direction:column;gap:10px}
+.work-item{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.work-name{flex:1;font-size:13px;color:var(--white);font-weight:500}
+.work-input-wrap{display:flex;align-items:center;gap:6px}
+.work-input{width:70px;background:#0a0a0a;border:1px solid #444;color:var(--white);padding:8px 10px;border-radius:8px;font-size:16px;font-weight:700;text-align:right;outline:none;font-family:inherit;-webkit-appearance:none}
+.work-input:focus{border-color:var(--accent)}
+.work-unit{font-size:11px;color:var(--gray);white-space:nowrap}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.summary-label{color:var(--gray);font-size:13px}
+.summary-value{font-weight:700;color:var(--accent);font-size:16px}
+.result-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+.result-icon.success{background:rgba(26,138,74,.2)}
+.result-icon.error{background:rgba(232,68,26,.2)}
+.result-title{text-align:center;font-size:20px;font-weight:700;margin-bottom:8px}
+.result-msg{text-align:center;font-size:13px;color:var(--gray);margin-bottom:32px;line-height:1.6;white-space:pre-line}
+.loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 0}
+.spinner{width:40px;height:40px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--gray)}
+canvas{display:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-logo">DAITA FACTORY</div>
+  <div class="header-title">作業記録</div>
+</div>
+
+<div id="screen-scan" class="screen active">
+  <div style="margin-bottom:24px">
+    <div class="scan-label">QRスキャン</div>
+    <div id="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="scan-overlay"><div class="scan-frame"><div class="scan-line"></div></div></div>
+    </div>
+    <div class="scan-status" id="scan-status">カメラを起動中...</div>
+  </div>
+  <div class="divider"><span>または手入力</span></div>
+  <div class="manual-row">
+    <input type="number" id="manual-id" class="manual-input" placeholder="案件番号を入力" inputmode="numeric">
+    <button class="btn btn-primary btn-sm" onclick="manualSearch()">検索</button>
+  </div>
+</div>
+
+<div id="screen-loading" class="screen">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">案件情報を取得中...</div>
+  </div>
+</div>
+
+<div id="screen-record" class="screen">
+  <div class="anken-card">
+    <div class="anken-no" id="r-anken-no"></div>
+    <div class="anken-name" id="r-anken-name"></div>
+    <div class="anken-client" id="r-anken-client"></div>
+  </div>
+  <div class="field-group">
+    <div class="field-label">スタッフ</div>
+    <div class="staff-grid" id="staff-grid"></div>
+  </div>
+  <div class="field-group">
+    <div class="field-label">作業時間（分）</div>
+    <div class="work-items">
+      <div class="work-item"><div class="work-name">見積・メール・電話</div><div class="work-input-wrap"><input type="number" class="work-input" id="w1" value="0" min="0" inputmode="numeric"><span class="work-unit">分</span></div></div>
+      <div class="work-item"><div class="work-name">準備・片付け・返送</div><div class="work-input-wrap"><input type="number" class="work-input" id="w2" value="0" min="0" inputmode="numeric"><span class="work-unit">分</span></div></div>
+      <div class="work-item"><div class="work-name">撮影時間</div><div class="work-input-wrap"><input type="number" class="work-input" id="w3" value="0" min="0" inputmode="numeric"><span class="work-unit">分</span></div></div>
+      <div class="work-item"><div class="work-name">データ処理・納品</div><div class="work-input-wrap"><input type="number" class="work-input" id="w4" value="0" min="0" inputmode="numeric"><span class="work-unit">分</span></div></div>
+      <div class="work-item"><div class="work-name">再撮影・再納品</div><div class="work-input-wrap"><input type="number" class="work-input" id="w5" value="0" min="0" inputmode="numeric"><span class="work-unit">分</span></div></div>
+    </div>
+  </div>
+  <div class="anken-card" style="margin-bottom:22px">
+    <div class="summary-row"><span class="summary-label">合計作業時間</span><span class="summary-value" id="total-time">0 分</span></div>
+  </div>
+  <button class="btn btn-primary" onclick="submitRecord()" style="margin-bottom:12px">記録する</button>
+  <button class="btn btn-secondary" onclick="goToScan()">← スキャンに戻る</button>
+</div>
+
+<div id="screen-result" class="screen">
+  <div style="text-align:center;padding:40px 0">
+    <div class="result-icon" id="result-icon"></div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-msg" id="result-msg"></div>
+    <button class="btn btn-primary" onclick="goToScan()">続けて記録する</button>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
+const STAFF_LIST = ['熊谷','白木','琴音','礼恩','舞代','歩美','谷','江嶋','その他'];
+const WORK_FIELDS = [
+  {id:'w1',fieldCode:'見積・メール・電話'},
+  {id:'w2',fieldCode:'準備・片付け・返送'},
+  {id:'w3',fieldCode:'撮影時間'},
+  {id:'w4',fieldCode:'データ処理・納品'},
+  {id:'w5',fieldCode:'再撮影・再納品'},
+];
+
+let currentRecord=null,selectedStaff=null,scanning=false,videoStream=null,detector=null;
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+function buildStaffGrid(){
+  const grid=document.getElementById('staff-grid');
+  grid.innerHTML='';
+  STAFF_LIST.forEach(name=>{
+    const btn=document.createElement('button');
+    btn.className='staff-btn';btn.textContent=name;
+    btn.onclick=()=>{
+      selectedStaff=name;
+      document.querySelectorAll('.staff-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    grid.appendChild(btn);
+  });
+}
+function updateTotal(){
+  let total=0;
+  WORK_FIELDS.forEach(f=>{total+=parseInt(document.getElementById(f.id).value)||0});
+  document.getElementById('total-time').textContent=total+' 分';
+}
+
+async function startCamera(){
+  const statusEl=document.getElementById('scan-status');
+  try{
+    // BarcodeDetector APIが使えるか確認
+    if('BarcodeDetector' in window){
+      detector=new BarcodeDetector({formats:['qr_code']});
+      statusEl.textContent='BarcodeDetector使用中';
+    } else {
+      statusEl.textContent='カメラ起動中...（jsQR使用）';
+    }
+
+    videoStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
+    });
+    const video=document.getElementById('video');
+    video.srcObject=videoStream;
+    await video.play();
+    statusEl.textContent='QRコードにカメラを向けてください';
+    scanning=true;
+    scanLoop();
+  }catch(e){
+    statusEl.textContent='カメラ使用不可 → 手入力をご利用ください\n('+e.message+')';
+  }
+}
+
+function stopCamera(){
+  scanning=false;
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
+}
+
+async function scanLoop(){
+  if(!scanning)return;
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('canvas');
+
+  try{
+    if(detector && video.readyState===video.HAVE_ENOUGH_DATA){
+      // BarcodeDetector API（高精度）
+      const barcodes=await detector.detect(video);
+      if(barcodes.length>0){
+        const val=barcodes[0].rawValue;
+        document.getElementById('scan-status').textContent='✅ 検出: '+val;
+        stopCamera();
+        setTimeout(()=>fetchRecord(val),300);
+        return;
+      }
+    } else if(!detector && video.readyState===video.HAVE_ENOUGH_DATA){
+      // jsQRフォールバック
+      canvas.width=video.videoWidth;
+      canvas.height=video.videoHeight;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(video,0,0);
+      // jsQRが読み込まれているか確認
+      if(typeof jsQR !== 'undefined'){
+        const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'attemptBoth'});
+        if(code){
+          document.getElementById('scan-status').textContent='✅ 検出: '+code.data;
+          stopCamera();
+          setTimeout(()=>fetchRecord(code.data),300);
+          return;
+        }
+      }
+    }
+  }catch(err){
+    // エラーは無視して継続
+  }
+
+  setTimeout(scanLoop, 200); // 200ms間隔でスキャン
+}
+
+async function callGAS(params){
+  const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(params)});
+  const text=await res.text();
+  try{return JSON.parse(text);}
+  catch(e){throw new Error('レスポンス解析失敗: '+text.substring(0,200));}
+}
+
+async function fetchRecord(ankenNo){
+  showScreen('loading');
+  document.getElementById('loading-text').textContent='案件情報を取得中...';
+  try{
+    const data=await callGAS({action:'getRecord',ankenNo:String(ankenNo)});
+    if(data.error){showResult(false,'エラー',data.error);return;}
+    if(!data.records||data.records.length===0){
+      showResult(false,'案件が見つかりません','案件番号「'+ankenNo+'」は存在しません');return;
+    }
+    currentRecord=data.records[0];showRecordScreen(ankenNo);
+  }catch(e){showResult(false,'通信エラー',e.message);}
+}
+
+function showRecordScreen(ankenNo){
+  document.getElementById('r-anken-no').textContent='案件番号 '+ankenNo;
+  document.getElementById('r-anken-name').textContent=currentRecord['案件名']?.value||'（案件名なし）';
+  document.getElementById('r-anken-client').textContent=currentRecord['会社名']?.value||'';
+  selectedStaff=null;
+  WORK_FIELDS.forEach(f=>{document.getElementById(f.id).value=0;});
+  updateTotal();buildStaffGrid();showScreen('record');
+}
+
+async function submitRecord(){
+  if(!selectedStaff){alert('スタッフを選択してください');return;}
+  const total=WORK_FIELDS.reduce((s,f)=>s+(parseInt(document.getElementById(f.id).value)||0),0);
+  if(total===0){alert('作業時間を入力してください');return;}
+  showScreen('loading');
+  document.getElementById('loading-text').textContent='kintoneに記録中...';
+  const today=new Date().toISOString().split('T')[0];
+  const recordId=currentRecord['$id'].value;
+  const existingTable=currentRecord['活動履歴']?.value||[];
+  const newRow={value:{
+    '日付':{value:today},'名前':{value:selectedStaff},
+    '見積・メール・電話':{value:String(parseInt(document.getElementById('w1').value)||0)},
+    '準備・片付け・返送':{value:String(parseInt(document.getElementById('w2').value)||0)},
+    '撮影時間':{value:String(parseInt(document.getElementById('w3').value)||0)},
+    'データ処理・納品':{value:String(parseInt(document.getElementById('w4').value)||0)},
+    '再撮影・再納品':{value:String(parseInt(document.getElementById('w5').value)||0)},
+    'テーブル_共有':{value:''}
+  }};
+  try{
+    const data=await callGAS({action:'addActivity',recordId,existingTable,newRow});
+    if(data.revision){
+      showResult(true,'記録完了！',selectedStaff+'\n合計 '+total+'分\nkintoneに追加しました');
+    }else{
+      showResult(false,'記録失敗',JSON.stringify(data));
+    }
+  }catch(e){showResult(false,'通信エラー',e.message);}
+}
+
+function showResult(success,title,msg){
+  document.getElementById('result-icon').textContent=success?'✅':'❌';
+  document.getElementById('result-icon').className='result-icon '+(success?'success':'error');
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-msg').textContent=msg;
+  showScreen('result');
+}
+
+function goToScan(){currentRecord=null;showScreen('scan');startCamera();}
+
+function manualSearch(){
+  const val=document.getElementById('manual-id').value.trim();
+  if(!val){alert('案件番号を入力してください');return;}
+  stopCamera();fetchRecord(val);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildStaffGrid();
+  WORK_FIELDS.forEach(f=>{document.getElementById(f.id).addEventListener('input',updateTotal);});
+  startCamera();
+});
+</script>
+</body>
+</html>
