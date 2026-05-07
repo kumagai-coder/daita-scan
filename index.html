@@ -313,7 +313,13 @@ function manualSearch(){
 document.addEventListener('DOMContentLoaded',()=>{
   buildStaffGrid();
   WORK_FIELDS.forEach(f=>{document.getElementById(f.id).addEventListener('input',updateTotal);});
-  startCamera();
+
+  // URLのid=XXXXを自動検出
+  const params = new URLSearchParams(window.location.search);
+  const idFromUrl = params.get('id');
+  if(idFromUrl){
+    fetchRecord(idFromUrl);
+  }
 });
 </script>
 </body>
