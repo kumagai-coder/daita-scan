@@ -2,109 +2,173 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>代田ファクトリー 作業タイマー</title>
 <style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #0a0a0a;
-  color: #f5f5f0;
-  font-family: "Helvetica Neue", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-}
-.box {
-  width: min(90vw, 420px);
-  padding: 28px 22px;
-  border: 1px solid #333;
-  border-radius: 14px;
-  background: #1a1a1a;
-  text-align: center;
-}
-.logo {
-  color: #e8441a;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  margin-bottom: 10px;
-}
-h1 {
-  font-size: 22px;
-  margin: 0 0 10px;
-}
-p {
-  color: #aaa;
-  font-size: 14px;
-  line-height: 1.7;
-  margin: 0;
-}
-.anken {
-  margin: 16px 0;
-  padding: 12px;
-  background: #101010;
-  border: 1px solid #333;
-  border-radius: 10px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-}
-a {
-  display: block;
-  margin-top: 18px;
-  color: #fff;
-  background: #e8441a;
-  padding: 16px 18px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 16px;
-}
-.sub {
-  margin-top: 14px;
-  color: #777;
-  font-size: 12px;
-}
+:root{--bg:#0a0a0a;--card:#1a1a1a;--line:#303030;--text:#f5f5f0;--muted:#8f8f8f;--accent:#e8441a;--green:#1a8a4a;--blue:#2f6fed;--amber:#d58a00}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;min-height:100vh;max-width:520px;margin:0 auto}
+.header{padding:18px 18px 12px;border-bottom:1px solid #222;position:sticky;top:0;background:rgba(10,10,10,.96);z-index:10}
+.logo{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:700}
+.title{font-size:15px;font-weight:700;margin-top:2px}
+.screen{display:none;padding:20px 18px 28px}.screen.active{display:block}
+.label{font-size:11px;letter-spacing:.15em;color:var(--accent);margin-bottom:10px;font-weight:700}
+.staff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.staff-btn{padding:11px 8px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:var(--text);font-size:14px;font-weight:700}
+.staff-btn.selected{background:var(--accent);border-color:var(--accent)}
+.notice{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.top-row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
+.slot{font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card.running{border-color:var(--accent);box-shadow:0 0 0 1px rgba(232,68,26,.25)}
+.card.done{border-color:var(--green)}
+.job-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}
+.anken-no{font-size:11px;color:var(--accent);letter-spacing:.12em;font-weight:700;margin-bottom:4px}
+.anken-name{font-size:15px;font-weight:700;line-height:1.35}
+.client{font-size:12px;color:var(--muted);margin-top:3px}
+.badge{border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+.running-b{background:rgba(232,68,26,.16);color:#ff9b7d}.paused-b{background:rgba(213,138,0,.16);color:#ffcd78}.done-b{background:rgba(26,138,74,.16);color:#8ee0b1}.idle-b{background:#292929;color:#cfcfcf}
+.select,.input,.memo{width:100%;background:#101010;border:1px solid #333;color:var(--text);padding:13px 14px;border-radius:10px;font-size:16px;outline:none;font-family:inherit}
+.select{font-size:14px;margin-top:8px}
+.timer{font-size:34px;font-weight:800;letter-spacing:.04em;margin:10px 0;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.mini{background:#101010;border:1px solid #2b2b2b;border-radius:9px;padding:8px}
+.mini-label{font-size:11px;color:var(--muted);line-height:1.3}.mini-value{font-size:15px;font-weight:800;color:var(--accent);margin-top:2px}
+.btn{width:100%;padding:15px;border-radius:12px;border:none;font-size:15px;font-weight:700;letter-spacing:.04em;color:#fff;background:#222;border:1px solid #333}
+.primary{background:var(--accent);border:none}.green{background:var(--green);border:none}.blue{background:var(--blue);border:none}.amber{background:var(--amber);border:none}.danger{background:#481d16;color:#ffb5a8;border:1px solid #793024}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.add-row{display:grid;grid-template-columns:1fr 92px;gap:8px;margin:12px 0}
+.empty{border:1px dashed #3a3a3a;border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
+.loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 0}.spinner{width:40px;height:40px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.edit-row{display:grid;grid-template-columns:1fr 92px;gap:8px;align-items:center;margin:8px 0}.edit-label{font-size:13px}.time-input{width:100%;background:#101010;border:1px solid #333;color:var(--text);padding:11px;border-radius:9px;text-align:right;font-size:16px;font-weight:800}.memo{min-height:70px;resize:vertical;font-size:14px;margin-top:8px}
+.total{background:#101010;border:1px solid #333;border-radius:12px;padding:13px;margin:12px 0;display:flex;justify-content:space-between}.total strong{font-size:18px;color:var(--accent)}
+.result{text-align:center;padding:40px 0}.result-title{font-size:20px;font-weight:700;margin-bottom:8px}.result-msg{font-size:13px;color:var(--muted);margin-bottom:26px;line-height:1.6;white-space:pre-line}
 </style>
 </head>
 <body>
-<div class="box">
-  <div class="logo">DAITA FACTORY</div>
-  <h1>作業タイマーを開く</h1>
-  <p id="message">案件番号を確認しています。</p>
-  <div class="anken" id="ankenBox" style="display:none"></div>
-  <a id="link" href="#">作業タイマーへ進む</a>
-  <div class="sub">ボタンを押すと、作業タイマー画面を開きます。</div>
+<div class="header"><div class="logo">DAITA FACTORY</div><div class="title">作業タイマー</div></div>
+
+<div id="screen-workspace" class="screen active">
+  <div class="label">スタッフ</div>
+  <div class="staff-grid" id="staff-grid"></div>
+  <div class="top-row"><div class="notice">最大3案件まで追加できます。別案件を開始すると、今の案件は自動で一時停止します。</div><div class="slot" id="slot-count">0/3</div></div>
+  <div id="jobs"></div>
+  <div class="card">
+    <div class="label">案件追加</div>
+    <div class="add-row"><input class="input" id="manual-id" type="number" inputmode="numeric" placeholder="案件番号"><button class="btn primary" onclick="manualAdd()">追加</button></div>
+  </div>
+  <button class="btn" onclick="openReview()">送信前確認</button>
 </div>
 
+<div id="screen-loading" class="screen"><div class="loading"><div class="spinner"></div><div id="loading-text">案件情報を取得中...</div></div></div>
+<div id="screen-review" class="screen"><div class="label">送信前確認・修正</div><div id="review-list"></div><button class="btn" onclick="backToWorkspace()">作業中リストへ戻る</button></div>
+<div id="screen-result" class="screen"><div class="result"><div class="result-title" id="result-title"></div><div class="result-msg" id="result-msg"></div><button class="btn primary" onclick="backToWorkspace()">作業中リストへ戻る</button></div></div>
+
 <script>
-var GAS_APP_URL = 'https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
+var STAFF_LIST=['熊谷','白木','琴音','礼恩','舞代','歩美','谷','江嶋','その他'];
+var WORK_FIELDS=[
+  {fieldCode:'見積・メール・電話',label:'見積・メール・電話'},
+  {fieldCode:'準備・片付け・返送',label:'準備・片付け・返送'},
+  {fieldCode:'撮影時間',label:'撮影時間'},
+  {fieldCode:'データ処理・納品',label:'データ処理・納品'},
+  {fieldCode:'再撮影・再納品',label:'再撮影・再納品'}
+];
+var MAX_JOBS=3;
+var STORAGE_KEY='daita-work-timer-github-v1';
+var GAS_URL='https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
+var selectedStaff=null;
+var jobs=[];
 
-function getAnkenNo() {
-  var params = new URLSearchParams(window.location.search);
-  return params.get('id') || params.get('anken') || '';
+function showScreen(name){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById('screen-'+name).classList.add('active')}
+function buildStaffGrid(){var grid=document.getElementById('staff-grid');grid.innerHTML='';STAFF_LIST.forEach(function(name){var btn=document.createElement('button');btn.className='staff-btn'+(selectedStaff===name?' selected':'');btn.textContent=name;btn.onclick=function(){selectedStaff=name;saveState();buildStaffGrid()};grid.appendChild(btn)})}
+function jsonp(action,payload){return new Promise(function(resolve,reject){var callback='__daita_cb_'+Date.now()+'_'+Math.random().toString(16).slice(2);var script=document.createElement('script');var timer=setTimeout(function(){cleanup();reject(new Error('通信がタイムアウトしました'))},20000);function cleanup(){clearTimeout(timer);delete window[callback];if(script.parentNode)script.parentNode.removeChild(script)}window[callback]=function(data){cleanup();resolve(data)};script.onerror=function(){cleanup();reject(new Error('GASとの通信に失敗しました'))};script.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback='+encodeURIComponent(callback)+'&payload='+encodeURIComponent(JSON.stringify(payload||{}))+'&t='+Date.now();document.body.appendChild(script)})}
+function manualAdd(){var val=document.getElementById('manual-id').value.trim();if(!val){alert('案件番号を入力してください');return}addJobByAnkenNo(val)}
+function extractAnkenNo(raw){var value=String(raw||'').trim();try{var url=new URL(value);return url.searchParams.get('id')||url.searchParams.get('anken')||value}catch(e){return value}}
+
+async function addJobByAnkenNo(ankenNo){
+  if(jobs.length>=MAX_JOBS){alert('作業中リストは最大3案件までです。');return}
+  if(jobs.some(function(j){return j.ankenNo===String(ankenNo)})){alert('この案件はすでに作業中リストにあります。');return}
+  showScreen('loading');document.getElementById('loading-text').textContent='案件情報を取得中...';
+  try{
+    var data=await jsonp('getRecord',{ankenNo:String(ankenNo)});
+    if(data.error){showResult('エラー',data.error);return}
+    if(!data.records||data.records.length===0){showResult('案件が見つかりません','案件番号「'+ankenNo+'」は存在しません');return}
+    jobs.push(createJob(String(ankenNo),data.records[0]));saveState();backToWorkspace()
+  }catch(e){showResult('通信エラー',e.message)}
 }
 
-function setupLink() {
-  var ankenNo = getAnkenNo();
-  var url = ankenNo
-    ? GAS_APP_URL + '?id=' + encodeURIComponent(ankenNo)
-    : GAS_APP_URL;
-
-  var link = document.getElementById('link');
-  link.href = url;
-
-  var ankenBox = document.getElementById('ankenBox');
-  if (ankenNo) {
-    document.getElementById('message').textContent = 'この案件を作業タイマーで開きます。';
-    ankenBox.textContent = '案件番号 ' + ankenNo;
-    ankenBox.style.display = 'block';
-  } else {
-    document.getElementById('message').textContent = '案件番号なしで作業タイマーを開きます。';
-  }
+function createJob(ankenNo,record){var totals={};WORK_FIELDS.forEach(function(f){totals[f.fieldCode]=0});return{id:String(Date.now())+'-'+Math.random().toString(16).slice(2),ankenNo:ankenNo,recordId:record['$id'].value,name:(record['案件名']&&record['案件名'].value)||'（案件名なし）',client:(record['会社名']&&record['会社名'].value)||'',status:'idle',selectedField:WORK_FIELDS[0].fieldCode,startedAt:null,totals:totals,memo:''}}
+function backToWorkspace(){showScreen('workspace');renderJobs()}
+function renderJobs(){buildStaffGrid();document.getElementById('slot-count').textContent=jobs.length+'/'+MAX_JOBS;var container=document.getElementById('jobs');if(jobs.length===0){container.innerHTML='<div class="empty">QRまたは案件番号から案件を追加してください。<br>追加後に作業項目を選び、開始をタップします。</div>';return}container.innerHTML=jobs.map(jobCardHtml).join('')}
+function jobCardHtml(job){
+  var statusLabel={running:'計測中',paused:'一時停止中',done:'送信待ち',idle:'未開始'}[job.status];
+  var statusClass={running:'running-b',paused:'paused-b',done:'done-b',idle:'idle-b'}[job.status];
+  var options=WORK_FIELDS.map(function(f){return `<option value="${escapeHtml(f.fieldCode)}"${job.selectedField===f.fieldCode?' selected':''}>${escapeHtml(f.label)}</option>`}).join('');
+  var controls=job.status==='running'
+    ? `<div class="btn-row"><button class="btn amber" onclick="pauseJob('${job.id}')">一時停止</button><button class="btn green" onclick="finishJob('${job.id}')">終了</button></div>`
+    : job.status==='done'
+      ? `<div class="btn-row"><button class="btn blue" onclick="reopenJob('${job.id}')">再開</button><button class="btn" onclick="openReview()">確認・送信</button></div>`
+      : `<div class="btn-row"><button class="btn green" onclick="startJob('${job.id}')">${job.status==='paused'?'再開':'開始'}</button><button class="btn danger" onclick="removeJob('${job.id}')">削除</button></div>`;
+  return `
+    <div class="card ${job.status}">
+      <div class="job-head">
+        <div>
+          <div class="anken-no">案件番号 ${escapeHtml(job.ankenNo)}</div>
+          <div class="anken-name">${escapeHtml(job.name)}</div>
+          <div class="client">${escapeHtml(job.client)}</div>
+        </div>
+        <div class="badge ${statusClass}">${statusLabel}</div>
+      </div>
+      <select class="select" onchange="setJobField('${job.id}',this.value)" ${job.status==='running'?'disabled':''}>${options}</select>
+      <div class="timer">${formatMs(getJobElapsedMs(job))}</div>
+      <div class="grid">${WORK_FIELDS.map(function(f){return `<div class="mini"><div class="mini-label">${escapeHtml(f.label)}</div><div class="mini-value">${msToMinutes(getFieldMs(job,f.fieldCode))}分</div></div>`}).join('')}</div>
+      ${controls}
+    </div>`;
 }
 
-setupLink();
+function startJob(jobId){if(!selectedStaff){alert('先にスタッフを選択してください。');return}var now=Date.now();jobs.forEach(function(job){if(job.status==='running'){addRunningTime(job,now);job.status='paused';job.startedAt=null}});var job=jobs.find(function(j){return j.id===jobId});if(!job)return;job.status='running';job.startedAt=now;saveState();renderJobs()}
+function pauseJob(jobId){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;if(job.status==='running')addRunningTime(job,Date.now());job.status='paused';job.startedAt=null;saveState();renderJobs()}
+function finishJob(jobId){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;if(job.status==='running')addRunningTime(job,Date.now());job.status='done';job.startedAt=null;saveState();renderJobs()}
+function reopenJob(jobId){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;job.status='paused';saveState();renderJobs()}
+function removeJob(jobId){if(!confirm('この案件を作業中リストから削除しますか？未送信の時間は消えます。'))return;jobs=jobs.filter(function(j){return j.id!==jobId});saveState();renderJobs()}
+function setJobField(jobId,fieldCode){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;job.selectedField=fieldCode;saveState()}
+function addRunningTime(job,now){if(!job.startedAt)return;job.totals[job.selectedField]=(job.totals[job.selectedField]||0)+Math.max(0,now-job.startedAt)}
+function stopAllRunning(){var now=Date.now();jobs.forEach(function(job){if(job.status==='running'){addRunningTime(job,now);job.status='paused';job.startedAt=null}});saveState()}
+function getFieldMs(job,fieldCode){var value=job.totals[fieldCode]||0;if(job.status==='running'&&job.selectedField===fieldCode&&job.startedAt)value+=Date.now()-job.startedAt;return value}
+function getJobElapsedMs(job){return WORK_FIELDS.reduce(function(sum,f){return sum+getFieldMs(job,f.fieldCode)},0)}
+
+function openReview(){stopAllRunning();renderReview();showScreen('review')}
+function renderReview(){
+  var list=document.getElementById('review-list');
+  if(jobs.length===0){list.innerHTML='<div class="empty">送信できる案件がありません。</div>';return}
+  list.innerHTML=jobs.map(function(job){
+    var total=WORK_FIELDS.reduce(function(sum,f){return sum+msToMinutes(job.totals[f.fieldCode]||0)},0);
+    return `
+      <div class="card">
+        <div class="anken-no">案件番号 ${escapeHtml(job.ankenNo)}</div>
+        <div class="anken-name">${escapeHtml(job.name)}</div>
+        <div class="client">${escapeHtml(job.client)}</div>
+        <div style="margin-top:12px">${WORK_FIELDS.map(function(f){return `<div class="edit-row"><div class="edit-label">${escapeHtml(f.label)}</div><input class="time-input" type="number" min="0" inputmode="numeric" value="${msToMinutes(job.totals[f.fieldCode]||0)}" onchange="setReviewMinutes('${job.id}','${escapeHtml(f.fieldCode)}',this.value)"></div>`}).join('')}</div>
+        <textarea class="memo" placeholder="修正理由・補足メモ（任意）" onchange="setJobMemo('${job.id}',this.value)">${escapeHtml(job.memo||'')}</textarea>
+        <div class="total"><span>合計</span><strong id="review-total-${job.id}">${total}分</strong></div>
+        <button class="btn primary" onclick="submitJob('${job.id}')">この案件をkintoneへ送信</button>
+      </div>`;
+  }).join('');
+}
+function setReviewMinutes(jobId,fieldCode,value){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;job.totals[fieldCode]=Math.max(0,parseInt(value,10)||0)*60000;saveState();var total=WORK_FIELDS.reduce(function(sum,f){return sum+msToMinutes(job.totals[f.fieldCode]||0)},0);var el=document.getElementById('review-total-'+job.id);if(el)el.textContent=total+'分'}
+function setJobMemo(jobId,value){var job=jobs.find(function(j){return j.id===jobId});if(!job)return;job.memo=value;saveState()}
+
+async function submitJob(jobId){if(!selectedStaff){alert('スタッフを選択してください。');showScreen('workspace');return}var job=jobs.find(function(j){return j.id===jobId});if(!job)return;var minutesByField={};var total=0;WORK_FIELDS.forEach(function(f){var minutes=msToMinutes(job.totals[f.fieldCode]||0);minutesByField[f.fieldCode]=minutes;total+=minutes});if(total===0){alert('作業時間が0分のため送信できません。');return}showScreen('loading');document.getElementById('loading-text').textContent='kintoneに記録中...';var newRow={value:{'日付':{value:getLocalDateString()},'名前':{value:selectedStaff},'見積・メール・電話':{value:String(minutesByField['見積・メール・電話'])},'準備・片付け・返送':{value:String(minutesByField['準備・片付け・返送'])},'撮影時間':{value:String(minutesByField['撮影時間'])},'データ処理・納品':{value:String(minutesByField['データ処理・納品'])},'再撮影・再納品':{value:String(minutesByField['再撮影・再納品'])},'テーブル_共有':{value:job.memo||''}}};try{var data=await jsonp('addActivity',{recordId:job.recordId,existingTable:[],newRow:newRow});if(data.revision){jobs=jobs.filter(function(j){return j.id!==jobId});saveState();showResult('記録完了','案件 '+job.ankenNo+'\\n'+selectedStaff+'\\n合計 '+total+'分をkintoneに追加しました')}else{showResult('記録失敗',JSON.stringify(data))}}catch(e){showResult('通信エラー',e.message)}}
+function showResult(title,msg){document.getElementById('result-title').textContent=title;document.getElementById('result-msg').textContent=msg;showScreen('result')}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify({selectedStaff:selectedStaff,jobs:jobs}))}
+function loadState(){try{var saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');selectedStaff=saved.selectedStaff||null;jobs=Array.isArray(saved.jobs)?saved.jobs:[];var now=Date.now();jobs.forEach(function(job){if(job.status==='running'){addRunningTime(job,now);job.status='paused';job.startedAt=null}WORK_FIELDS.forEach(function(f){if(job.totals[f.fieldCode]==null)job.totals[f.fieldCode]=0})});saveState()}catch(e){selectedStaff=null;jobs=[]}}
+function getLocalDateString(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function msToMinutes(ms){return Math.round(ms/60000)}
+function formatMs(ms){var s=Math.floor(ms/1000);return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+document.addEventListener('DOMContentLoaded',function(){loadState();renderJobs();setInterval(renderJobs,1000);var idFromUrl=extractAnkenNo(window.location.href);if(idFromUrl&&idFromUrl!==window.location.href)addJobByAnkenNo(idFromUrl)});
+window.addEventListener('beforeunload',stopAllRunning);
 </script>
 </body>
 </html>
