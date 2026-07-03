@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>代田ファクトリー 作業記録へ移動中</title>
+<title>代田ファクトリー 作業タイマー</title>
 <style>
 body {
   margin: 0;
@@ -30,7 +30,7 @@ body {
   margin-bottom: 10px;
 }
 h1 {
-  font-size: 20px;
+  font-size: 22px;
   margin: 0 0 10px;
 }
 p {
@@ -39,52 +39,72 @@ p {
   line-height: 1.7;
   margin: 0;
 }
+.anken {
+  margin: 16px 0;
+  padding: 12px;
+  background: #101010;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
 a {
-  display: inline-block;
+  display: block;
   margin-top: 18px;
   color: #fff;
   background: #e8441a;
-  padding: 13px 18px;
-  border-radius: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
   text-decoration: none;
   font-weight: 700;
+  font-size: 16px;
+}
+.sub {
+  margin-top: 14px;
+  color: #777;
+  font-size: 12px;
 }
 </style>
 </head>
 <body>
 <div class="box">
   <div class="logo">DAITA FACTORY</div>
-  <h1>作業タイマーへ移動中</h1>
+  <h1>作業タイマーを開く</h1>
   <p id="message">案件番号を確認しています。</p>
-  <a id="link" href="#" style="display:none">作業タイマーを開く</a>
+  <div class="anken" id="ankenBox" style="display:none"></div>
+  <a id="link" href="#">作業タイマーへ進む</a>
+  <div class="sub">ボタンを押すと、作業タイマー画面を開きます。</div>
 </div>
 
 <script>
-const GAS_APP_URL = 'https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
+var GAS_APP_URL = 'https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
 
 function getAnkenNo() {
-  const params = new URLSearchParams(window.location.search);
+  var params = new URLSearchParams(window.location.search);
   return params.get('id') || params.get('anken') || '';
 }
 
-function redirectToGas() {
-  const ankenNo = getAnkenNo();
-  const url = ankenNo
+function setupLink() {
+  var ankenNo = getAnkenNo();
+  var url = ankenNo
     ? GAS_APP_URL + '?id=' + encodeURIComponent(ankenNo)
     : GAS_APP_URL;
 
-  const link = document.getElementById('link');
+  var link = document.getElementById('link');
   link.href = url;
-  link.style.display = 'inline-block';
 
-  document.getElementById('message').textContent = ankenNo
-    ? '案件番号 ' + ankenNo + ' を作業タイマーで開きます。'
-    : '作業タイマーを開きます。';
-
-  window.location.replace(url);
+  var ankenBox = document.getElementById('ankenBox');
+  if (ankenNo) {
+    document.getElementById('message').textContent = 'この案件を作業タイマーで開きます。';
+    ankenBox.textContent = '案件番号 ' + ankenNo;
+    ankenBox.style.display = 'block';
+  } else {
+    document.getElementById('message').textContent = '案件番号なしで作業タイマーを開きます。';
+  }
 }
 
-redirectToGas();
+setupLink();
 </script>
 </body>
 </html>
