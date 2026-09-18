@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>代田ファクトリー 作業タイマー</title>
+<title>代田ファクトリー 作業タイマー / NG登録</title>
 <style>
 :root{--bg:#0a0a0a;--card:#1a1a1a;--line:#303030;--text:#f5f5f0;--muted:#8f8f8f;--accent:#e8441a;--green:#1a8a4a;--blue:#2f6fed;--amber:#d58a00}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -40,6 +40,7 @@ body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue","Hiragi
 .btn{width:100%;padding:15px;border-radius:12px;border:none;font-size:15px;font-weight:700;letter-spacing:.04em;color:#fff;background:#222;border:1px solid #333}
 .primary{background:var(--accent);border:none}.green{background:var(--green);border:none}.blue{background:var(--blue);border:none}.amber{background:var(--amber);border:none}.danger{background:#481d16;color:#ffb5a8;border:1px solid #793024}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.menu-actions{display:grid;gap:12px;margin-bottom:16px}.ng-action{margin-top:12px}
 .add-row{display:grid;grid-template-columns:1fr 92px;gap:8px;margin:12px 0}
 .empty{border:1px dashed #3a3a3a;border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
 .loading{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 0}.spinner{width:40px;height:40px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
@@ -49,7 +50,22 @@ body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue","Hiragi
 </style>
 </head>
 <body>
-<div class="header"><div class="logo">DAITA FACTORY</div><div class="title">作業タイマー</div></div>
+<div class="header"><div class="logo">DAITA FACTORY</div><div class="title">作業タイマー / NG登録</div></div>
+
+<div id="screen-menu" class="screen">
+  <div class="label">この案件で行うことを選んでください</div>
+  <div class="card">
+    <div class="anken-no" id="menu-anken-no"></div>
+    <div class="anken-name" id="menu-anken-name"></div>
+    <div class="client" id="menu-client"></div>
+  </div>
+  <div class="menu-actions">
+    <button class="btn green" onclick="openWorkTimer()">作業タイマーを開く</button>
+    <button class="btn danger" onclick="openNgForm()">NG登録へ進む</button>
+  </div>
+  <p class="notice">NG登録はGoogleフォームで行います。会社名と案件番号を引き継ぎます。計測中の作業は一時停止します。戻ったら必要に応じて「再開」を押してください。</p>
+  <button class="btn" onclick="backToWorkspace()">作業中リストへ戻る</button>
+</div>
 
 <div id="screen-workspace" class="screen active">
   <div class="label">スタッフ</div>
@@ -57,8 +73,8 @@ body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue","Hiragi
   <div class="top-row"><div class="notice">最大3案件まで追加できます。別案件を開始すると、今の案件は自動で一時停止します。</div><div class="slot" id="slot-count">0/3</div></div>
   <div id="jobs"></div>
   <div class="card">
-    <div class="label">案件追加</div>
-    <div class="add-row"><input class="input" id="manual-id" type="number" inputmode="numeric" placeholder="案件番号"><button class="btn primary" onclick="manualAdd()">追加</button></div>
+    <div class="label">案件を開く（作業タイマー / NG登録）</div>
+    <div class="add-row"><input class="input" id="manual-id" type="number" inputmode="numeric" placeholder="案件番号"><button class="btn primary" onclick="manualAdd()">開く</button></div>
   </div>
   <button class="btn" onclick="openReview()">送信前確認</button>
 </div>
@@ -81,6 +97,11 @@ var STORAGE_KEY='daita-work-timer-github-v1';
 var GAS_URL='https://script.google.com/macros/s/AKfycby6rXFd0vbhRa6h-AcHeM38M5X0voIjdI5NR5upx6behjToGAVwdWfxNqa_fACRPLNO-A/exec';
 var selectedStaff=null;
 var jobs=[];
+// 旧画面 gas/index.html と同じNGフォーム・事前入力項目を使用する。
+var NG_FORM_BASE_URL='https://docs.google.com/forms/d/e/1FAIpQLSc6TqkR487KU82Gv0Q4-mDl2WLwx7T5nXIM0SE5IQNcbRyTpQ/viewform';
+var NG_FORM_ENTRY_COMPANY='entry.1286222237';
+var NG_FORM_ENTRY_ANKEN_NO='entry.1408220144';
+var menuJob=null;
 
 function showScreen(name){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById('screen-'+name).classList.add('active')}
 function buildStaffGrid(){var grid=document.getElementById('staff-grid');grid.innerHTML='';STAFF_LIST.forEach(function(name){var btn=document.createElement('button');btn.className='staff-btn'+(selectedStaff===name?' selected':'');btn.textContent=name;btn.onclick=function(){selectedStaff=name;saveState();buildStaffGrid()};grid.appendChild(btn)})}
@@ -89,15 +110,43 @@ function manualAdd(){var val=document.getElementById('manual-id').value.trim();i
 function extractAnkenNo(raw){var value=String(raw||'').trim();try{var url=new URL(value);return url.searchParams.get('id')||url.searchParams.get('anken')||value}catch(e){return value}}
 
 async function addJobByAnkenNo(ankenNo){
-  if(jobs.length>=MAX_JOBS){alert('作業中リストは最大3案件までです。');return}
-  if(jobs.some(function(j){return j.ankenNo===String(ankenNo)})){alert('この案件はすでに作業中リストにあります。');return}
+  menuJob=null;
   showScreen('loading');document.getElementById('loading-text').textContent='案件情報を取得中...';
   try{
     var data=await jsonp('getRecord',{ankenNo:String(ankenNo)});
     if(data.error){showResult('エラー',data.error);return}
     if(!data.records||data.records.length===0){showResult('案件が見つかりません','案件番号「'+ankenNo+'」は存在しません');return}
-    jobs.push(createJob(String(ankenNo),data.records[0]));saveState();backToWorkspace()
+    showJobMenu(createJob(String(ankenNo),data.records[0]))
   }catch(e){showResult('通信エラー',e.message)}
+}
+
+function showJobMenu(job){
+  menuJob=job;
+  document.getElementById('menu-anken-no').textContent='案件番号 '+job.ankenNo;
+  document.getElementById('menu-anken-name').textContent=job.name;
+  document.getElementById('menu-client').textContent=job.client;
+  showScreen('menu');
+}
+function openWorkTimer(){
+  if(!menuJob)return;
+  if(!jobs.some(function(job){return job.ankenNo===menuJob.ankenNo})){
+    if(jobs.length>=MAX_JOBS){alert('作業中リストは最大3案件までです。終了した案件を送信してから追加してください。NG登録はそのまま利用できます。');return}
+    jobs.push(menuJob);saveState();
+  }
+  backToWorkspace();
+}
+function openNgForJob(jobId){
+  var job=jobs.find(function(j){return j.id===jobId});
+  if(job)showJobMenu(job);
+}
+function openNgForm(){
+  if(!menuJob){alert('案件を開き直してください。');return}
+  var url=new URL(NG_FORM_BASE_URL);
+  url.searchParams.set('usp','pp_url');
+  url.searchParams.set(NG_FORM_ENTRY_COMPANY,menuJob.client);
+  url.searchParams.set(NG_FORM_ENTRY_ANKEN_NO,menuJob.ankenNo);
+  stopAllRunning();
+  window.location.href=url.toString();
 }
 
 function createJob(ankenNo,record){var totals={};WORK_FIELDS.forEach(function(f){totals[f.fieldCode]=0});return{id:String(Date.now())+'-'+Math.random().toString(16).slice(2),ankenNo:ankenNo,recordId:record['$id'].value,name:(record['案件名']&&record['案件名'].value)||'（案件名なし）',client:(record['会社名']&&record['会社名'].value)||'',status:'idle',selectedField:WORK_FIELDS[0].fieldCode,startedAt:null,totals:totals,memo:''}}
@@ -126,6 +175,7 @@ function jobCardHtml(job){
       <div class="timer">${formatMs(getJobElapsedMs(job))}</div>
       <div class="grid">${WORK_FIELDS.map(function(f){return `<button type="button" class="mini ${job.selectedField===f.fieldCode?'selected':''}" onclick="setJobField('${job.id}','${escapeHtml(f.fieldCode)}')" ${job.status==='running'?'disabled':''}><div class="mini-label">${escapeHtml(f.label)}</div><div class="mini-value">${msToMinutes(getFieldMs(job,f.fieldCode))}分</div></button>`}).join('')}</div>
       ${controls}
+      <button class="btn danger ng-action" onclick="openNgForJob('${job.id}')">NG登録・メニュー</button>
     </div>`;
 }
 
