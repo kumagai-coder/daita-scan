@@ -84,7 +84,7 @@ body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue","Hiragi
 <div id="screen-result" class="screen"><div class="result"><div class="result-title" id="result-title"></div><div class="result-msg" id="result-msg"></div><button class="btn primary" onclick="backToWorkspace()">作業中リストへ戻る</button></div></div>
 
 <script>
-var STAFF_LIST=['熊谷','白木','琴音','礼恩','舞代','歩美','谷','江嶋','その他'];
+var STAFF_LIST=['熊谷','白木','琴音','礼恩','舞代','歩美','江嶋','加藤','村上','坂根','その他'];
 var WORK_FIELDS=[
   {fieldCode:'見積・メール・電話',label:'見積・メール・電話'},
   {fieldCode:'準備・片付け・返送',label:'準備・片付け・返送'},
@@ -214,7 +214,7 @@ function setJobMemo(jobId,value){var job=jobs.find(function(j){return j.id===job
 async function submitJob(jobId){if(!selectedStaff){alert('スタッフを選択してください。');showScreen('workspace');return}var job=jobs.find(function(j){return j.id===jobId});if(!job)return;var minutesByField={};var total=0;WORK_FIELDS.forEach(function(f){var minutes=msToMinutes(job.totals[f.fieldCode]||0);minutesByField[f.fieldCode]=minutes;total+=minutes});if(total===0){alert('作業時間が0分のため送信できません。');return}showScreen('loading');document.getElementById('loading-text').textContent='kintoneに記録中...';var newRow={value:{'日付':{value:getLocalDateString()},'名前':{value:selectedStaff},'見積・メール・電話':{value:String(minutesByField['見積・メール・電話'])},'準備・片付け・返送':{value:String(minutesByField['準備・片付け・返送'])},'撮影時間':{value:String(minutesByField['撮影時間'])},'データ処理・納品':{value:String(minutesByField['データ処理・納品'])},'再撮影・再納品':{value:String(minutesByField['再撮影・再納品'])},'テーブル_共有':{value:job.memo||''}}};try{var data=await jsonp('addActivity',{recordId:job.recordId,existingTable:[],newRow:newRow});if(data.revision){jobs=jobs.filter(function(j){return j.id!==jobId});saveState();showResult('記録完了','案件 '+job.ankenNo+'\\n'+selectedStaff+'\\n合計 '+total+'分をkintoneに追加しました')}else{showResult('記録失敗',JSON.stringify(data))}}catch(e){showResult('通信エラー',e.message)}}
 function showResult(title,msg){document.getElementById('result-title').textContent=title;document.getElementById('result-msg').textContent=msg;showScreen('result')}
 function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify({selectedStaff:selectedStaff,jobs:jobs}))}
-function loadState(){try{var saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');selectedStaff=saved.selectedStaff||null;jobs=Array.isArray(saved.jobs)?saved.jobs:[];var now=Date.now();jobs.forEach(function(job){if(job.status==='running'){addRunningTime(job,now);job.status='paused';job.startedAt=null}WORK_FIELDS.forEach(function(f){if(job.totals[f.fieldCode]==null)job.totals[f.fieldCode]=0})});saveState()}catch(e){selectedStaff=null;jobs=[]}}
+function loadState(){try{var saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');selectedStaff=STAFF_LIST.indexOf(saved.selectedStaff)!==-1?saved.selectedStaff:null;jobs=Array.isArray(saved.jobs)?saved.jobs:[];var now=Date.now();jobs.forEach(function(job){if(job.status==='running'){addRunningTime(job,now);job.status='paused';job.startedAt=null}WORK_FIELDS.forEach(function(f){if(job.totals[f.fieldCode]==null)job.totals[f.fieldCode]=0})});saveState()}catch(e){selectedStaff=null;jobs=[]}}
 function getLocalDateString(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function msToMinutes(ms){return Math.round(ms/60000)}
 function formatMs(ms){var s=Math.floor(ms/1000);return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
